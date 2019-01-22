@@ -1,0 +1,35 @@
+version: '3.4'
+
+services:
+  # database with users 
+  userserver:
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      SA_PASSWORD: "Markdev2019"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+  # api service for authentication/registration and manage users
+  userservice:
+    image: ${DOCKER_REGISTRY-}userservice
+    build:
+      context: .
+      dockerfile: UserService/Dockerfile
+    depends_on:
+      - userserver
+  # API Gateway for clients, which provides all service's functionality
+  shopapi:
+    image: ${DOCKER_REGISTRY-}shopapi
+    build:
+      context: .
+      dockerfile: ShopAPI/Dockerfile
+    depends_on:
+      - userservice
+  # client SPA on Angular
+  clientspa:
+    image: ${DOCKER_REGISTRY-}clientspa
+    build:
+      context: .
+      dockerfile: ClientSPA/Dockerfile
+    depends_on:
+      - shopapi

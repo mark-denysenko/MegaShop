@@ -1,0 +1,6 @@
+{
+  "issuer": "UserService",
+  "audience": "apiserver_http://localhost:51884/",
+  "key": "mysupersecret_secretkey",
+  "lifetime": 1
+}

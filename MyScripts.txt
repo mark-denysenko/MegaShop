@@ -1,0 +1,126 @@
+----------------------------- // Making container for MS SQL SERVER DB
+!!!
+!!!			In problem case: delete old containers, stop container on the same ports
+!!!
+docker pull microsoft/mssql-server-linux - old
+docker pull mcr.microsoft.com/mssql/server
+
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Markdev2019" -p 1433:1433 --name markdev -d mcr.microsoft.com/mssql/server
+
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Markdev2019" `
+>>    -p 1401:1433 --name markdev `
+>>    -d mcr.microsoft.com/mssql/server
+
+//
+docker exec -it markdev bash
+/# /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P Markdev2019
+... write sql command, for executing write GO
+
+// Stopping and Deleting 
+docker [container] stop markdev
+docker rm markdev
+
+// compose.yml (example)
+
+services:
+  webapplication1:
+    build:
+      context: .
+      dockerfile: WebApplication1/Dockerfile
+    depends_on:
+      - db
+  db:
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+        SA_PASSWORD: "Markdev2019"
+        ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433" or 1401:1433
+
+// code connectionString
+private static string _connStr = @"
+   Server=localhost,1401; or [--name (markdev)]
+   Database=master;
+   User Id=SA;
+   Password=Markdev2019
+";
+
+using (var conn = new SqlConnection(_connStr)) 
+      {
+         conn.Open();
+         
+         var cmd = new SqlCommand(@"SELECT [Name] FROM master..sysdatabases;", conn);
+            
+         var reader = cmd.ExecuteReader();
+         
+         while (reader.Read()) {
+            Console.WriteLine(reader["Name"]);
+         }
+      }
+
+services.AddTransient<IDbConnection>(sp => new SqlConnection("Server=db;Database=master;User=sa;Password=MyPassword001;"));
+
+public void ConfigureServices(IServiceCollection services)
+{
+    // Database connection string.
+    // Make sure to update the Password value below from "Your_password123" to your actual password.
+    var connection = @"Server=db;Database=master;User=sa;Password=Your_password123;";
+
+    // This line uses 'UseSqlServer' in the 'options' parameter
+    // with the connection string defined above.
+    services.AddDbContext<ApplicationDbContext>(
+        options => options.UseSqlServer(connection));
+
+    services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+    services.AddMvc();
+
+    // Add application services.
+    services.AddTransient<IEmailSender, AuthMessageSender>();
+    services.AddTransient<ISmsSender, AuthMessageSender>();
+}
+--------------------------------------
+=========== configure SPA client
+
+FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
+
+# Setup NodeJs (need for angular in runtime)
+RUN apt-get update && \
+    apt-get install -y wget && \
+    apt-get install -y gnupg2 && \
+    wget -qO- https://deb.nodesource.com/setup_6.x | bash - && \
+    apt-get install -y build-essential nodejs
+# End setup
+
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+# microsoft/aspnetcore-build has all stuff for building project
+FROM microsoft/aspnetcore-build AS build
+WORKDIR /src
+COPY ["ClientSPA/ClientSPA.csproj", "ClientSPA/"]
+RUN dotnet restore "ClientSPA/ClientSPA.csproj"
+COPY . .
+WORKDIR "/src/ClientSPA"
+RUN dotnet build "ClientSPA.csproj" -c Release -o /app
+
+FROM build AS publish
+RUN dotnet publish "ClientSPA.csproj" -c Release -o /app
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app .
+ENTRYPOINT ["dotnet", "ClientSPA.dll"]
+
+//// someone advice to write only this
+FROM microsoft/aspnetcore-build
+ARG source  
+RUN echo "source: $source"  
+WORKDIR /app  
+COPY ${source:-/build} .  
+EXPOSE 80  
+ENTRYPOINT ["dotnet", "ClientSPA.dll"]
+--------------------------------------
