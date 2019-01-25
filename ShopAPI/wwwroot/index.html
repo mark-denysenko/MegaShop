@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Login</title>
+</head>
+<body>
+    <p>Login form</p><br />
+    <form method="post" action="/api/account/token">
+        <label for="login">Login:</label>
+        <input name="login" type="text" /><br />
+
+        <label for="password">Password:</label>
+        <input name="password" type="password" /><br />
+
+        <button type="submit">Send!</button>
+    </form>
+    <hr />
+    <p>Register form</p><br />
+    <form method="post" action="/api/account/register">
+        <label for="login">Login:</label>
+        <input name="login" type="text" /><br />
+
+        <label for="name">Name:</label>
+        <input name="name" type="text" /><br />
+
+        <label for="password">Password:</label>
+        <input name="password" type="password" /><br />
+
+        <button type="submit">Send!</button>
+    </form>
+    <hr />
+    <!--<a href="/api/account/delete/">Delete user:</a>-->
+    <form method="delete" action="/api/account/delete/">
+        <input type="text" id="id" />
+        <button type="submit">Delete</button>
+    </form>
+</body>
+</html>

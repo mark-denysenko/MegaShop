@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -22,9 +23,33 @@ namespace ShopAPI
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                        {
+                            options.RequireHttpsMetadata = true;
+                            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                            {
+                                ValidateIssuer = true,
+                                ValidIssuer = AuthOptions.ISSUER,
+
+                                ValidateAudience = true,
+                                ValidAudience = AuthOptions.AUDIENCE,
+
+                                RequireExpirationTime = true,
+                                ValidateLifetime = true,
+
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = AuthOptions.sharedSymmetricSecurityKey,
+
+                                // Clock skew compensates for server time drift.
+                                ClockSkew = TimeSpan.FromMinutes(5),
+                            };
+                        });
+
+            services.AddHttpClient();
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
@@ -41,6 +66,11 @@ namespace ShopAPI
             }
 
             app.UseHttpsRedirection();
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
+            app.UseAuthentication();
+
             app.UseMvc();
         }
     }
