@@ -7,7 +7,7 @@ namespace ShopAPI
     {
         public const string ISSUER = "web_api"; // издатель токена
         public const string AUDIENCE = "users"; // потребитель токена
-        public const int LIFETIME = 5;
+        public const int LIFETIME = 1;
 
         const string KEY = "mysupersecret_secretkey!123456789";   // ключ для шифрации
 

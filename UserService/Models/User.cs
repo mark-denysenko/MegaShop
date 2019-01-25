@@ -8,5 +8,7 @@ namespace UserService.Models
         public string Login { get; set; }
         public string Name { get; set; }
         public string PasswordHash { get; set; }
+
+        public string RefreshToken { get; set; }
     }
 }

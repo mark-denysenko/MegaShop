@@ -26,3 +26,10 @@ services:
     depends_on:
       - userservice
   # client SPA on Angular
+  clientspa:
+    image: ${DOCKER_REGISTRY-}clientspa
+    build:
+      context: .
+      dockerfile: ClientSPA/Dockerfile
+    depends_on:
+      - shopapi

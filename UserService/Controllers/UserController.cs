@@ -36,18 +36,33 @@ namespace UserService.Controllers
         }
 
         // POST api/user/authentication
-        [HttpPost]
-        [Route("authentication")]
+        [HttpPost("authentication")]
         public ActionResult<User> Post([FromBody] UserAuthentication inputUser)
         {
             string passwordHash = _passwordHasher.GetHash(inputUser.Password);
+            var user = _userDb.Users.FirstOrDefault(u => u.Login == inputUser.Login && u.PasswordHash == passwordHash);
 
-            return _userDb.Users.FirstOrDefault(u => u.Login == inputUser.Login && u.PasswordHash == passwordHash);
+            // create JWT
+            //user.RefreshToken = jwt;
+            //_userDb.Users.Update(user);
+
+            return user;
         }
 
+        // POST api/user/refresh
+        //[HttpPost("refresh")]
+        //public ActionResult<User> RefreshAuthentication([FromBody] string accessToken)
+        //{
+        //    var user = _userDb.Users.FirstOrDefault(u => u.Name == userName);
+
+        //    //if (!IsRefreshTokenExpired(user.RefreshToken))
+        //    //    return Ok();
+
+        //    return BadRequest();
+        //}
+
         // POST api/user/register
-        [HttpPost]
-        [Route("register")]
+        [HttpPost("register")]
         public ActionResult<User> Post([FromBody] UserRegister inputUser)
         {
             User userFromDb = _userDb.Users.FirstOrDefault(u => u.Login == inputUser.Login);
@@ -79,6 +94,5 @@ namespace UserService.Controllers
             }
             return StatusCode(StatusCodes.Status422UnprocessableEntity);
         }
-
     }
 }

@@ -15,6 +15,7 @@ namespace ShopAPI
             public const string Authentication = url + "authentication";
             public const string Register = url + "register";
             public const string DeleteUser = url;
+            public const string RefreshAccessToken = url + "refresh";
         }
     }
 }
