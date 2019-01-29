@@ -1,19 +1,27 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
+using ShopAPI.HttpClients;
 
 namespace ShopAPI.Infrastructure
 {
     public class TokenService
     {
-        public static string GenerateToken(string uniqueName)
+        public static async Task<string> GenerateToken(string uniqueName)
+        {
+            string refreshIdentifier = await new UserServiceClient().GetRefreshIdentifierByLogin(uniqueName);
+            return GenerateToken(uniqueName, refreshIdentifier);
+        }
+
+        public static string GenerateToken(string uniqueName, string refreshIdentifier)
         {
             var claims = new Claim[]
             {
                 new Claim(JwtRegisteredClaimNames.UniqueName, uniqueName),
-                //new Claim(JwtRegisteredClaimNames.Nbf, new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds().ToString()),
-                //new Claim(JwtRegisteredClaimNames.Exp, new DateTimeOffset(DateTime.Now.AddDays(1)).ToUnixTimeSeconds().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, refreshIdentifier)
             };
 
             var now = DateTime.UtcNow;
@@ -29,16 +37,40 @@ namespace ShopAPI.Infrastructure
             return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
 
-        public static bool HasValidRefreshToken(string accessToken)
+        public static JwtSecurityToken DecodeToken(string jwtToken)
         {
-            return false;
-        }
-
-        public JwtSecurityToken DecodeToken(string jwtToken)
-        {
-            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
+            // need check security key 
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken.Trim());
 
             return jwt;
+        }
+
+        public static string GetLoginFromToken(string jwtToken)
+        {
+            var jwt = DecodeToken(jwtToken);
+
+            return jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName).Value;
+        }
+
+        public static bool IsExpiredToken(string token)
+        {
+            var jwt = DecodeToken(token);
+
+            return jwt.ValidTo < DateTime.Now;
+        }
+
+        public static async Task<string> TryRefreshAccesTokenAsync(string accesToken)
+        {
+            var jwt = DecodeToken(accesToken);
+
+            string login = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName).Value;
+            string jwtRefreshIdentidier = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti).Value;
+            string refreshIdentifier = await new UserServiceClient().GetRefreshIdentifierByLogin(login);
+
+            if (jwtRefreshIdentidier == refreshIdentifier)
+                return GenerateToken(login, refreshIdentifier);
+            else
+                return null;
         }
     }
 }

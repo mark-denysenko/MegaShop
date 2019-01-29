@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ShopAPI.Infrastructure;
 
 namespace ShopAPI
 {
@@ -50,22 +52,35 @@ namespace ShopAPI
 
                             options.Events = new JwtBearerEvents
                             {
-                                OnAuthenticationFailed = context =>
+                                // OnAuthenticationFailed = async context =>
+                                OnMessageReceived = async context =>
                                 {
-                                    if (context.Exception.GetType() == typeof(Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException))
+                                    string accessToken = context.Request.Headers["Authorization"];
+                                    if (string.IsNullOrEmpty(accessToken) || !TokenService.IsExpiredToken(accessToken.Split(' ')[1]))
+                                        return;
+
+                                    string newAccessToken = await TokenService.TryRefreshAccesTokenAsync(accessToken.Split(' ')[1]);
+
+                                    if (!string.IsNullOrEmpty(newAccessToken))
                                     {
-                                        context.Response.Headers.Add("Token-Expired", "true");
-
-                                        //string accessToken = context.Request.Headers["Authorization"];
-                                        //accessToken = accessToken.Split(' ')[1];
-
-                                        //var handler = new HttpClientHandler();
-                                        //handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-                                        //var client = new HttpClient(handler);
-                                        //client.PostAsJsonAsync(SERVICES_URLS.UserService.RefreshAccessToken, accessToken);
-
+                                        context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
+                                        context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
                                     }
-                                    return Task.CompletedTask;
+
+                                    //string login = TokenService.GetLoginFromToken(accessToken.Split(' ')[1]);
+                                    //var response = await CustomHttpClientFactory.CreateHttpClientWithoutSslValidation()
+                                    //                                            .PostAsync(SERVICES_URLS.UserService.CheckRefreshToken, new StringContent($"\"{login}\"", Encoding.UTF8, "application/json"));
+
+                                    //if (response.IsSuccessStatusCode)
+                                    //{
+                                    //    var newAccessToken = await TokenService.GenerateToken(login);
+                                    //    context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
+                                    //    context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
+                                    //}
+                                    //else
+                                    //{
+                                    //    context.Response.Headers.Add("Token-Expired", "true");
+                                    //}
                                 }
                             };
                         });

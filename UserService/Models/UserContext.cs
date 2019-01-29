@@ -11,7 +11,7 @@ namespace UserService.Models
         {
             // uncomment it when first time SOLUTION running (or userserver - userdb)
             // when db created, comment it and uncomment Migration
-            //Database.EnsureCreated();
+            Database.EnsureCreated();
 
             //Database.Migrate();
         }
@@ -22,6 +22,5 @@ namespace UserService.Models
         }
 
         public DbSet<User> Users { get; set; }
-        //public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

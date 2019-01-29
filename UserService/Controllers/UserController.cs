@@ -42,24 +42,41 @@ namespace UserService.Controllers
             string passwordHash = _passwordHasher.GetHash(inputUser.Password);
             var user = _userDb.Users.FirstOrDefault(u => u.Login == inputUser.Login && u.PasswordHash == passwordHash);
 
-            // create JWT
-            //user.RefreshToken = jwt;
-            //_userDb.Users.Update(user);
+            if (user != null && (user.RefreshToken == null || TokenService.IsRefreshTokenExpired(user.RefreshToken)))
+            {
+                // create JWT
+                user.RefreshToken = TokenService.GenerateToken(user.Login);
+                _userDb.Users.Update(user);
+                _userDb.SaveChanges();
+            }
 
             return user;
         }
 
         // POST api/user/refresh
-        //[HttpPost("refresh")]
-        //public ActionResult<User> RefreshAuthentication([FromBody] string accessToken)
-        //{
-        //    var user = _userDb.Users.FirstOrDefault(u => u.Name == userName);
+        [HttpPost("refresh")]
+        public ActionResult<User> RefreshAuthentication([FromBody] string login)
+        {
+            var user = _userDb.Users.FirstOrDefault(u => u.Login == login);
 
-        //    //if (!IsRefreshTokenExpired(user.RefreshToken))
-        //    //    return Ok();
+            if (user != null && !TokenService.IsRefreshTokenExpired(user.RefreshToken))
+                return Ok();
 
-        //    return BadRequest();
-        //}
+            return BadRequest();
+        }
+
+        [HttpGet("refreshpart/{login}")]
+        public ActionResult<string> PartRefreshToken(string login)
+        {
+            var user = _userDb.Users.FirstOrDefault(u => u.Login == login);
+
+            if(user != null && user.RefreshToken != null)
+            {
+                return Ok(TokenService.RefreshIdentifierPart(user.RefreshToken));
+            }
+
+            return BadRequest();
+        }
 
         // POST api/user/register
         [HttpPost("register")]

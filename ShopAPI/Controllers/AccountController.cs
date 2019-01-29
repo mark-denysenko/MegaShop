@@ -37,10 +37,10 @@ namespace ShopAPI.Controllers
         [HttpPost("token")]
         public async Task<IActionResult> Token([FromForm]string login, [FromForm]string password)
         {
-            User identity = await _userClient.GetUserByLoginAndPassword(login, password);
+            User identity = await _userClient.AuthenticateUser(login, password);
 
             if (identity != null)
-                return new ObjectResult(new { userid = identity.Id, username = identity.Name, access_token = TokenService.GenerateToken(login) });
+                return new ObjectResult(new { userid = identity.Id, login = identity.Login, username = identity.Name, access_token = await TokenService.GenerateToken(login) });
 
             return BadRequest("Invalid login or password");
         }

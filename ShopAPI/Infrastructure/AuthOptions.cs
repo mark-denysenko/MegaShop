@@ -3,7 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ShopAPI
 {
-    public class AuthOptions
+    internal class AuthOptions
     {
         public const string ISSUER = "web_api"; // издатель токена
         public const string AUDIENCE = "users"; // потребитель токена

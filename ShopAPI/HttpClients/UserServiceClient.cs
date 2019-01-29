@@ -1,7 +1,6 @@
-﻿using ShopAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using ShopAPI.Infrastructure;
+using ShopAPI.Models;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -13,10 +12,7 @@ namespace ShopAPI.HttpClients
 
         public UserServiceClient()
         {
-            var handler = new HttpClientHandler();
-            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-
-            _client = new HttpClient(handler);
+            _client = CustomHttpClientFactory.CreateHttpClientWithoutSslValidation();
         }
 
         public async Task<bool> DeleteUser(int id)
@@ -33,7 +29,7 @@ namespace ShopAPI.HttpClients
             return await response.Content.ReadAsAsync<User>();
         }
 
-        public async Task<User> GetUserByLoginAndPassword(string login, string password)
+        public async Task<User> AuthenticateUser(string login, string password)
         {
             var response = await _client.PostAsJsonAsync(SERVICES_URLS.UserService.Authentication, new { login, password });
             return await response.Content.ReadAsAsync<User>();
@@ -43,6 +39,13 @@ namespace ShopAPI.HttpClients
         {
             var response = await _client.PostAsJsonAsync(SERVICES_URLS.UserService.Register, new { login, name, password });
             return await response.Content.ReadAsAsync<User>();
+        }
+
+        public async Task<string> GetRefreshIdentifierByLogin(string login)
+        {
+            var response = await _client.GetAsync(SERVICES_URLS.UserService.RefreshTokenIdentifier + login);
+
+            return await response.Content.ReadAsStringAsync();
         }
     }
 }
