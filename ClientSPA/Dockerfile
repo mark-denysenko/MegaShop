@@ -4,7 +4,7 @@ FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
 RUN apt-get update && \
     apt-get install -y wget && \
     apt-get install -y gnupg2 && \
-    wget -qO- https://deb.nodesource.com/setup_6.x | bash - && \
+    wget -qO- https://deb.nodesource.com/setup_9.x | bash - && \
     apt-get install -y build-essential nodejs
 # End setup
 

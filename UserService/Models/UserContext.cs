@@ -5,7 +5,7 @@ namespace UserService.Models
 {
     public class UserContext : DbContext
     {
-        private string connectionString = "Server=userserver;Database=userdb;User=sa;Password=Markdev2019;";
+        private string connectionString = "Server=dbserver;Database=userdb;User=sa;Password=Markdev2019;";
 
         public UserContext()
         {

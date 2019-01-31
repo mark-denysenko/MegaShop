@@ -2,8 +2,9 @@ version: '3.4'
 
 services:
   # database with users 
-  userserver:
+  dbserver:
     image: "mcr.microsoft.com/mssql/server"
+    container_name: shareserverdb
     environment:
       SA_PASSWORD: "Markdev2019"
       ACCEPT_EULA: "Y"
@@ -16,7 +17,13 @@ services:
       context: .
       dockerfile: UserService/Dockerfile
     depends_on:
-      - userserver
+      - dbserver
+  # api service for getting information about products
+  productservice:
+    image: ${DOCKER_REGISTRY-}productservice
+    build:
+      context: .
+      dockerfile: ../ProductService/Dockerfile
   # API Gateway for clients, which provides all service's functionality
   shopapi:
     image: ${DOCKER_REGISTRY-}shopapi

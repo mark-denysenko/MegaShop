@@ -28,6 +28,8 @@ namespace ShopAPI
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(options =>
                         {
@@ -52,7 +54,6 @@ namespace ShopAPI
 
                             options.Events = new JwtBearerEvents
                             {
-                                // OnAuthenticationFailed = async context =>
                                 OnMessageReceived = async context =>
                                 {
                                     string accessToken = context.Request.Headers["Authorization"];
@@ -66,26 +67,16 @@ namespace ShopAPI
                                         context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
                                         context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
                                     }
-
-                                    //string login = TokenService.GetLoginFromToken(accessToken.Split(' ')[1]);
-                                    //var response = await CustomHttpClientFactory.CreateHttpClientWithoutSslValidation()
-                                    //                                            .PostAsync(SERVICES_URLS.UserService.CheckRefreshToken, new StringContent($"\"{login}\"", Encoding.UTF8, "application/json"));
-
-                                    //if (response.IsSuccessStatusCode)
-                                    //{
-                                    //    var newAccessToken = await TokenService.GenerateToken(login);
-                                    //    context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
-                                    //    context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
-                                    //}
-                                    //else
-                                    //{
-                                    //    context.Response.Headers.Add("Token-Expired", "true");
-                                    //}
                                 }
                             };
                         });
 
             services.AddHttpClient();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info { Title = "Shop API", Version = "v1", Description = "The first swagger doc" });
+            });
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
@@ -93,6 +84,9 @@ namespace ShopAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // SPA stay on https://localhost:44305/ or https://clientspa:443/
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -106,7 +100,12 @@ namespace ShopAPI
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            // middleware for checking expiration of token and refreshing 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
+                //c.RoutePrefix = string.Empty;
+            });
 
             app.UseAuthentication();
 

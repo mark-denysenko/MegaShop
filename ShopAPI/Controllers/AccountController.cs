@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net.Http;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using ShopAPI.HttpClients;
 using ShopAPI.Infrastructure;
-using ShopAPI.Models;
+using ShopAPI.Models.UserModels;
 
 namespace ShopAPI.Controllers
 {
@@ -35,23 +29,26 @@ namespace ShopAPI.Controllers
         }
 
         [HttpPost("token")]
-        public async Task<IActionResult> Token([FromForm]string login, [FromForm]string password)
+        public async Task<IActionResult> Token([FromBody] UserLogin user)
         {
-            User identity = await _userClient.AuthenticateUser(login, password);
+            if (string.IsNullOrWhiteSpace(user.Login) || string.IsNullOrWhiteSpace(user.Password))
+                return BadRequest("Input login/password!");
+
+            User identity = await _userClient.AuthenticateUser(user.Login, user.Password);
 
             if (identity != null)
-                return new ObjectResult(new { userid = identity.Id, login = identity.Login, username = identity.Name, access_token = await TokenService.GenerateToken(login) });
+                return new ObjectResult(new { userid = identity.Id, login = identity.Login, username = identity.Name, access_token = await TokenService.GenerateToken(user.Login) });
 
             return BadRequest("Invalid login or password");
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromForm] string login, [FromForm] string name, [FromForm] string password)
+        public async Task<IActionResult> Register([FromBody] UserRegister user)
         {
-            User newUser = await _userClient.RegisterUser(login, name, password);
+            User newUser = await _userClient.RegisterUser(user.Login, user.Name, user.Password);
 
             if (newUser != null)
-                return Ok("User created!");
+                return Ok(newUser);
 
             return BadRequest("Can't register user!");
         }

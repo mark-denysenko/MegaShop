@@ -20,6 +20,8 @@ namespace ClientSPA
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // In production, the Angular files will be served from this directory
@@ -32,6 +34,8 @@ namespace ClientSPA
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

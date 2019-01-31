@@ -1,28 +1,41 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { RequestOptions, HttpModule } from '@angular/http';
 import { HttpClientModule } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { NavMenuComponent } from './nav-menu/nav-menu.component';
+import { NavBarComponent } from './nav-bar/nav-bar.component';
+import { LoginComponent } from './user/login/login.component';
 import { HomeComponent } from './home/home.component';
+import { AuthRequestOptions } from './auth-request-options';
+import  {AuthErrorHandler } from './auth-error-handler';
 
 @NgModule({
   declarations: [
     AppComponent,
-    NavMenuComponent,
+    NavBarComponent,
+    LoginComponent,
     HomeComponent
   ],
   imports: [
-    BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
-    HttpClientModule,
+    BrowserModule,
+    AppRoutingModule,
     FormsModule,
-    RouterModule.forRoot([
-      { path: '', component: HomeComponent, pathMatch: 'full' }
-    ])
+    HttpClientModule,
+    //HttpModule
   ],
-  providers: [],
+  providers: [
+  {
+  	provide: RequestOptions,
+  	useClass: AuthRequestOptions
+  },
+  {
+  	provide: ErrorHandler,
+  	useClass: AuthErrorHandler
+  }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

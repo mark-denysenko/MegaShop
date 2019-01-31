@@ -3,6 +3,7 @@ using ShopAPI.Infrastructure;
 using ShopAPI.Models;
 using System.Net.Http;
 using System.Threading.Tasks;
+using ShopAPI.Models.UserModels;
 
 namespace ShopAPI.HttpClients
 {
