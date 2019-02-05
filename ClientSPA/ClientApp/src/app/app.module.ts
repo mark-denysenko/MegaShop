@@ -1,39 +1,53 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, ErrorHandler } from '@angular/core';
-import { RequestOptions, HttpModule } from '@angular/http';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+
+// @auth0/angular-jwt
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NavBarComponent } from './nav-bar/nav-bar.component';
 import { LoginComponent } from './user/login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AuthRequestOptions } from './auth-request-options';
-import  {AuthErrorHandler } from './auth-error-handler';
+import { AuthInterceptor } from './services/auth/auth-interceptor';
+import { TOKEN_STORAGE, NEW_ACCESS_TOKEN } from './services/auth/auth.service';
+import { ProductComponent } from './products/product/product.component';
+import { ProductsListComponent } from './products/products-list/products-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NavBarComponent,
     LoginComponent,
-    HomeComponent
+    HomeComponent,
+    ProductComponent,
+    ProductsListComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     HttpClientModule,
-    //HttpModule
+    // HttpClientXsrfModule.withOptions({
+    // 	headerName: NEW_ACCESS_TOKEN,
+    // }),
+    // JwtModule.forRoot({
+    // 	config: {
+    // 		tokenGetter: function tokenGetter() {
+    // 			return localStorage.getItem(TOKEN_STORAGE);
+    // 		},
+    // 		whitelistedDomains: ['localhost:44388'],
+    // 		blacklistedRoutes: []
+    // 	}
+    // })
   ],
   providers: [
-  {
-  	provide: RequestOptions,
-  	useClass: AuthRequestOptions
-  },
-  {
-  	provide: ErrorHandler,
-  	useClass: AuthErrorHandler
+  { 
+    provide: HTTP_INTERCEPTORS, 
+    useClass: AuthInterceptor, 
+    multi: true 
   }
   ],
   bootstrap: [AppComponent]

@@ -6,4 +6,8 @@ export class ApiResources {
 	public static Register: string = 'account/register';
 	public static AuthorizeRes: string = 'account/check';
 
+	// Product service
+
+	public static Products: string = 'https://localhost:44388/api/products/';
+
 }

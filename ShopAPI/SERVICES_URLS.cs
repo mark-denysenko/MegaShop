@@ -10,7 +10,7 @@ namespace ShopAPI
         public class UserService
         {
             // container port 44349
-            public const string url = @"https://userservice:443/api/user/";
+            public const string url = "https://userservice:443/api/user/";
             public const string Users = url;
             public const string Authentication = url + "authentication";
             public const string Register = url + "register";
@@ -19,6 +19,12 @@ namespace ShopAPI
             public const string RefreshTokenIdentifier = url + "refreshpart/";
 
             public const string AccessTokenHEADER = "Access-Token";
+        }
+
+        public class ProductService
+        {
+            public const string Url = "https://productservice:443/api/products/";
+            public const string Products = Url;
         }
     }
 }

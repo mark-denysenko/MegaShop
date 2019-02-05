@@ -49,25 +49,35 @@ namespace ShopAPI
                                 IssuerSigningKey = AuthOptions.sharedSymmetricSecurityKey,
 
                                 // Clock skew compensates for server time drift.
-                                ClockSkew = TimeSpan.FromMinutes(5),
+                                ClockSkew = TimeSpan.FromMinutes(AuthOptions.CLOCK_SKEW),
                             };
 
                             options.Events = new JwtBearerEvents
                             {
-                                OnMessageReceived = async context =>
+                                OnTokenValidated = async context =>
                                 {
-                                    string accessToken = context.Request.Headers["Authorization"];
-                                    if (string.IsNullOrEmpty(accessToken) || !TokenService.IsExpiredToken(accessToken.Split(' ')[1]))
-                                        return;
+                                    var timeLeft = context.SecurityToken.ValidTo - DateTime.Now;
 
-                                    string newAccessToken = await TokenService.TryRefreshAccesTokenAsync(accessToken.Split(' ')[1]);
-
-                                    if (!string.IsNullOrEmpty(newAccessToken))
+                                    if (timeLeft < TimeSpan.FromMinutes(AuthOptions.LIFETIME * 0.5) && timeLeft > TimeSpan.FromSeconds(0))
                                     {
-                                        context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
-                                        context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
+                                        context.Response.Headers.Add(AuthOptions.NEW_ACCESS_TOKEN_HEADER,
+                                                                     await TokenService.GenerateToken(context.Principal.Identity.Name));
                                     }
                                 }
+                                //OnMessageReceived = async context =>
+                                //{
+                                //    string accessToken = context.Request.Headers["Authorization"];
+                                //    if (string.IsNullOrEmpty(accessToken) || !TokenService.IsExpiredToken(accessToken.Split(' ')[1]))
+                                //        return;
+
+                                //    string newAccessToken = await TokenService.TryRefreshAccesTokenAsync(accessToken.Split(' ')[1]);
+
+                                //    if (!string.IsNullOrEmpty(newAccessToken))
+                                //    {
+                                //        context.Response.Headers.Add(SERVICES_URLS.UserService.AccessTokenHEADER, newAccessToken);
+                                //        context.Request.Headers["Authorization"] = "Bearer " + newAccessToken;
+                                //    }
+                                //}
                             };
                         });
 
@@ -85,7 +95,7 @@ namespace ShopAPI
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             // SPA stay on https://localhost:44305/ or https://clientspa:443/
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithExposedHeaders(AuthOptions.NEW_ACCESS_TOKEN_HEADER));
 
             if (env.IsDevelopment())
             {
